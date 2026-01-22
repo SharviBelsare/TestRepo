@@ -100,6 +100,11 @@ function SemanticScholar() {
     const [openAccess, setOpenAccess] = useState(false);
     const [fieldsList, setFieldsList] = useState([]);
 
+    // Pagination
+    const [offset, setOffset] = useState(0);
+    const [total, setTotal] = useState(0);
+    const RESULTS_PER_PAGE = 20;
+
     // Detail View State
     const [selectedPaper, setSelectedPaper] = useState(null);
     const [paperDetails, setPaperDetails] = useState(null); // Full details incl citations
@@ -120,8 +125,7 @@ function SemanticScholar() {
     }, []);
 
     // Handlers
-    const handleSearch = async (e) => {
-        if (e) e.preventDefault();
+    const fetchResults = async (newOffset = 0) => {
         if (!query.trim()) return;
 
         setLoading(true);
@@ -130,19 +134,21 @@ function SemanticScholar() {
 
         try {
             let endpoint = '';
+            const params = new URLSearchParams({
+                query,
+                limit: RESULTS_PER_PAGE,
+                offset: newOffset
+            });
+
             if (activeTab === 'papers') {
                 const yearRange = (yearStart || yearEnd) ? `${yearStart || ''}-${yearEnd || ''}` : '';
-                const params = new URLSearchParams({
-                    query,
-                    limit: 10,
-                    openAccessPdf: openAccess
-                });
                 if (yearRange && yearRange !== '-') params.set('year', yearRange);
                 if (selectedField) params.set('fieldsOfStudy', selectedField);
+                // Fix boolean string conversion
+                if (openAccess) params.set('openAccessPdf', '');
 
                 endpoint = `http://localhost:4000/api/semantic/search?${params.toString()}`;
             } else {
-                const params = new URLSearchParams({ query, limit: 10 });
                 endpoint = `http://localhost:4000/api/semantic/author/search?${params.toString()}`;
             }
 
@@ -150,7 +156,6 @@ function SemanticScholar() {
             const data = await res.json();
 
             if (!res.ok) {
-                // Handle 429 specifically or general errors
                 if (res.status === 429) {
                     throw new Error("Rate limit exceeded. Please try again later or add an API key.");
                 }
@@ -159,14 +164,22 @@ function SemanticScholar() {
 
             if (data.data) {
                 setResults(data.data);
+                setTotal(data.total || 0);
+                setOffset(newOffset);
             } else {
                 setResults([]);
+                setTotal(0);
             }
         } catch (err) {
             setError(err.message);
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleSearch = (e) => {
+        if (e) e.preventDefault();
+        fetchResults(0);
     };
 
     const loadPaperDetails = async (paperId) => {
@@ -348,6 +361,29 @@ function SemanticScholar() {
                         ))
                     )}
                 </div>
+
+                {/* Pagination Controls */}
+                {results.length > 0 && (
+                    <div className="flex justify-center items-center mt-10 gap-4">
+                        <button
+                            onClick={() => fetchResults(offset - RESULTS_PER_PAGE)}
+                            disabled={offset === 0 || loading}
+                            className="px-4 py-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium transition-colors"
+                        >
+                            Previous
+                        </button>
+                        <span className="text-sm text-gray-600 font-medium">
+                            Showing {offset + 1}-{Math.min(offset + RESULTS_PER_PAGE, total)} of {total}
+                        </span>
+                        <button
+                            onClick={() => fetchResults(offset + RESULTS_PER_PAGE)}
+                            disabled={offset + RESULTS_PER_PAGE >= total || loading}
+                            className="px-4 py-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium transition-colors"
+                        >
+                            Next
+                        </button>
+                    </div>
+                )}
 
                 {!loading && results.length === 0 && query && (
                     <div className="text-center py-20 text-gray-500">

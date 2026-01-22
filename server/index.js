@@ -155,12 +155,13 @@ const fetchWithRetry = async (url, options, retries = 5, backoff = 2000) => {
 // 1. Topic-Based Paper Search
 app.get("/api/semantic/search", async (req, res) => {
   try {
-    const { query, limit = 10, year, fieldsOfStudy, openAccessPdf } = req.query;
+    const { query, limit = 10, offset = 0, year, fieldsOfStudy, openAccessPdf } = req.query;
     if (!query) return res.status(400).json({ error: "Query is required" });
 
     const url = new URL(`${SEMANTIC_API}/paper/search`);
     url.searchParams.set("query", query);
     url.searchParams.set("limit", limit);
+    url.searchParams.set("offset", offset);
 
     // standard fields
     url.searchParams.set("fields", "title,abstract,year,authors,venue,citationCount,referenceCount,openAccessPdf,url");
@@ -230,12 +231,13 @@ app.get("/api/semantic/paper/:paperId/references", async (req, res) => {
 // 5. Author Search
 app.get("/api/semantic/author/search", async (req, res) => {
   try {
-    const { query, limit = 10 } = req.query;
+    const { query, limit = 10, offset = 0 } = req.query;
     if (!query) return res.status(400).json({ error: "Query is required" });
 
     const url = new URL(`${SEMANTIC_API}/author/search`);
     url.searchParams.set("query", query);
     url.searchParams.set("limit", limit);
+    url.searchParams.set("offset", offset);
     url.searchParams.set("fields", "name,paperCount,citationCount,affiliations");
 
     const response = await fetchWithRetry(url, { headers: SEMANTIC_HEADERS() });
