@@ -8,6 +8,7 @@ import Miropage from './pages/Miropage'; // Your Miro embed page
 import Figma from './pages/Figma';
 import Github from './pages/Github';
 import Notion from './pages/Notion';
+import SemanticScholar from './pages/SemanticScholar';
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
         <Route path="/figma" element={<Figma />} />
         <Route path="/github" element={<Github/>} />
         <Route path="/notion" element={<Notion/>} />
+        <Route path="/semantic" element={<SemanticScholar />} />
 
         {/* Catch-all for unknown routes */}
         <Route path="*" element={<h2>404 - Page Not Found</h2>} />
