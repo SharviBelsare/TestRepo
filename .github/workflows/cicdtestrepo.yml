@@ -1,0 +1,46 @@
+name: CI/CD Workflow
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: TestRepo
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '24'
+      - name: Install dependencies
+        run: |
+          if [ -f package-lock.json ]; then npm ci; else npm install; fi
+      - name: Run tests
+        run: |
+          if ls **/*.spec.ts 1> /dev/null 2>&1 || ls **/*.test.ts 1> /dev/null 2>&1; then npm test; fi
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: ci
+    defaults:
+      run:
+        working-directory: TestRepo
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Deploy to Render
+        run: |
+          if [ -z "$RENDER_DEPLOY_HOOK" ]; then echo '::warning::RENDER_DEPLOY_HOOK is not set, skipping deploy.'; exit 0; fi
+          curl -X POST "$RENDER_DEPLOY_HOOK"
+        env:
+          RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
