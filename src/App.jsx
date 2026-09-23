@@ -9,6 +9,7 @@ import Figma from './pages/Figma';
 import Github from './pages/Github';
 import Notion from './pages/Notion';
 import SemanticScholar from './pages/SemanticScholar';
+import GoogleSheets from './pages/GoogleSheets';
 
 function App() {
   return (
@@ -25,6 +26,7 @@ function App() {
         <Route path="/github" element={<Github/>} />
         <Route path="/notion" element={<Notion/>} />
         <Route path="/semantic" element={<SemanticScholar />} />
+        <Route path="/sheets" element={<GoogleSheets />} />
 
         {/* Catch-all for unknown routes */}
         <Route path="*" element={<h2>404 - Page Not Found</h2>} />
